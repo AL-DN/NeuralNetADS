@@ -251,17 +251,29 @@ void Network::backProp(const vector<double> &targetVals)
         Layer &layer = m_layers[l];
         Layer &prevLayer = m_layers[l - 1];
 
-        for (unsigned n = 0; n < m_layers[l].size() - 1; ++n)
+        for (unsigned n = 0; n < m_layers[l].size() - 1; ++n) {
             layer[n].updateInputWeights(prevLayer);
         }
+
+        m_layers.back().back().setOutputVal(1.0);
+
+    }
 }
 
 void Network::getResults(vector<double> &resultsVals) const
 {
+    resultsVals.clear();
+
+    for (unsigned n=0; n < m_layers.back().size() - 1;++n) {
+        resultsVals.push_back(m_layers.back()[n].getOutputVal());
+    }
 }
 
 int main()
 {
+
+
+
     // instance of model
     vector<unsigned> topology;
     Network myNetwork(topology);
