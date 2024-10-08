@@ -8,6 +8,10 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <sstream>
+#include <fstream>
+
+
 
 using namespace std;
 
@@ -148,6 +152,7 @@ public:
     void feedFoward(const vector<double> &inputVals);
     void backProp(const vector<double> &targetVals);
     void getResults(vector<double> &resultsVals) const;
+    double getRecentAverageError(void) const { return m_recentAverageError; }
 
 private:
     // m_layers[layerNum][NeuronNum]
@@ -269,24 +274,129 @@ void Network::getResults(vector<double> &resultsVals) const
     }
 }
 
+void showVectorVals(string label, vector<double> &v) {
+    cout << label << " ";
+    for (unsigned i=0; i <v.size(); ++i) {
+        cout << v[i] << " ";
+    }
+
+    cout << endl;
+}
+/*------------- TrainingData Class ------------------*/
+
+class TrainingData {
+    public:
+        TrainingData(const string filename);
+        bool isEof(void) {return m_trainingDataFile.eof(); }
+        void getTopology(vector<unsigned> &topology);
+    
+        unsigned getNextInputs(vector<double> &inputsVals);
+        unsigned getTargetOutputs(vector<double> &targetOutputVals);
+
+    private:
+        ifstream m_trainingDataFile;
+};
+
+void TrainingData::getTopology(vector<unsigned> &topology) {
+    string line;
+    string label;
+
+    getline(m_trainingDataFile,line);
+    stringstream ss(line);
+    if(this->isEof() || label.compare("topology:") != 0){
+        abort();
+    }
+
+    while(!ss.eof()) {
+        unsigned n;
+        ss >> n;
+        topology.push_back(n);
+    }
+
+    return;
+
+}
+
+TrainingData::TrainingData(const string filename) {
+    m_trainingDataFile.open(filename.c_str());
+}
+
+unsigned TrainingData::getNextInputs(vector<double> &inputVals) {
+    inputVals.clear();
+
+    string line;
+    getline(m_trainingDataFile,line);
+    stringstream ss(line);
+
+    string label;
+    ss >> label;
+    if(label.compare("in:") == 0) {
+        double oneValue;
+        while(ss >> oneValue){
+            inputVals.push_back(oneValue);
+
+        }
+    }
+    return inputVals.size();
+}
+
+unsigned TrainingData::getTargetOutputs(vector<double> &targetOutputVals) {
+    targetOutputVals.clear();
+
+    string line;
+    getline(m_trainingDataFile,line);
+    stringstream ss(line);
+
+    string label;
+    ss >> label;
+    if(label.compare("out:")== 0) {
+        double oneValue;
+        while(ss >> oneValue) {
+            targetOutputVals.push_back(oneValue);
+        }
+    }
+
+    return targetOutputVals.size();
+
+}
+
 int main()
 {
+    //creates Training Data
 
+    TrainingData trainData("/tmp/trainingData.txt");
 
-
-    // instance of model
     vector<unsigned> topology;
+    trainData.getTopology(topology);
     Network myNetwork(topology);
 
-    vector<double> inputVals;
-    // feeds input data to model
-    myNetwork.feedFoward(inputVals);
+    vector<double> inputVals, targetVals, resultVals;
+    int trainingPass = 0;
 
-    vector<double> targetVals;
-    // performs back propogation
-    myNetwork.backProp(targetVals);
+    while (!trainData.isEof()) {
+        ++trainingPass;
+        cout << endl << "Pass " << trainingPass;
+    
+        if(trainData.getNextInputs(inputVals) != topology[0]) {
+            break;
+        }
+        showVectorVals(": Inputs:", inputVals);
+        myNetwork.feedFoward(inputVals);
 
-    vector<double> resultVals;
-    // to display results
-    myNetwork.getResults(resultVals);
+        myNetwork.getResults(resultVals);
+        showVectorVals("Outputs:", resultVals);
+
+        trainData.getTargetOutputs(targetVals);
+        showVectorVals("Targets:", targetVals);
+        assert(targetVals.size() == topology.back());
+
+        myNetwork.backProp(targetVals);
+
+        cout << "Net recent average error: "
+                << myNetwork.getRecentAverageError() << endl;
+
+    }
+
+    cout << endl << "SUCCESS!";
+
 }
