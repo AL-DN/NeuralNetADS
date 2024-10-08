@@ -11,14 +11,12 @@
 #include <sstream>
 #include <fstream>
 
-
-
 using namespace std;
 
 struct Connection
 {
     double weight;
-    double deltaweight;
+    double deltaWeight;
 };
 
 class Neuron;
@@ -32,7 +30,7 @@ public:
     Neuron(unsigned numOutputs, unsigned myIndex);
     void setOutputVal(double val) { m_outputVal = val; }
     double getOutputVal(void) const { return m_outputVal; }
-    void feedFoward(const Layer &prevLayer);
+    void feedForward(const Layer &prevLayer);
     void calcOutputGradients(double targetVal);
     void calcHiddenGradients(const Layer &nextLayer);
     void updateInputWeights(Layer &prevLayer);
@@ -42,20 +40,18 @@ private:
     double m_outputVal;
     unsigned m_myIndex;
     double m_gradient;
-    static double eta; //learning rate
-    static double alpha; //momentum
+    static double eta;   // learning rate
+    static double alpha; // momentum
 
     static double activationFunction(double x) { return tanh(x); }
     static double activationFunctionDerivative(double x);
     static double randomWeight(void) { return rand() / double(RAND_MAX); }
     double sumDOW(const Layer &nextLayer) const;
-    
 };
 
 // initalize eta / alpha
-double Neuron::eta = 0.15; 
+double Neuron::eta = 0.15;
 double Neuron::alpha = 0.5;
-
 
 /*-------------- External Neuron Constructor Definition-----------------*/
 
@@ -75,7 +71,7 @@ Neuron::Neuron(unsigned numOutputs, unsigned myIndex)
 
 /*-------------- Member Functions of Neuron -----------------*/
 
-void Neuron::feedFoward(const Layer &prevLayer)
+void Neuron::feedForward(const Layer &prevLayer)
 {
     /* Member Function Summary:
         Sums the previous layers outputs with their corresponding weights
@@ -132,15 +128,11 @@ void Neuron::updateInputWeights(Layer &prevLayer)
         Neuron &neuron = prevLayer[n];
         double oldDeltaWeight = neuron.m_outputWeights[m_myIndex].deltaWeight;
 
-        double newDeltaWeight = 
+        double newDeltaWeight =
             eta * // learning rate
-            neuron.getOutputVal() 
-            * m_gradient
-            * alpha
-            * oldDeltaWeight;
+            neuron.getOutputVal() * m_gradient * alpha * oldDeltaWeight;
     }
 }
-
 
 /*-------------------Network Class------------*/
 
@@ -149,7 +141,7 @@ class Network
 
 public:
     Network(const vector<unsigned> &topology);
-    void feedFoward(const vector<double> &inputVals);
+    void feedForward(const vector<double> &inputVals);
     void backProp(const vector<double> &targetVals);
     void getResults(vector<double> &resultsVals) const;
     double getRecentAverageError(void) const { return m_recentAverageError; }
@@ -182,16 +174,17 @@ Network::Network(const vector<unsigned> &topology)
         {
             m_layers.back().push_back(Neuron(numOutputs, neuronNum));
         }
+        m_layers.back().back().setOutputVal(1.0);
     }
 }
 
 /*---------------- NETWORK MEMBER FUNCTIONS-------------------*/
 
-void Network::feedFoward(const vector<double> &inputVals)
+void Network::feedForward(const vector<double> &inputVals)
 {
     assert(inputVals.size() == m_layers[0].size() - 1);
 
-    // latch inputVals to input neurons 
+    // latch inputVals to input neurons
     for (int i = 0; i < inputVals.size(); ++i)
     {
         m_layers[0][i].setOutputVal(inputVals[i]);
@@ -202,11 +195,11 @@ void Network::feedFoward(const vector<double> &inputVals)
     {
         Layer &prevLayer = m_layers[layerNum - 1];
         // for each neuron
-        for (unsigned n = 0; n < m_layers[layerNum].size()-1; ++n)
+        for (unsigned n = 0; n < m_layers[layerNum].size() - 1; ++n)
         {
             // connect neuron to input vals of next layer
             m_layers[layerNum][n].feedForward(prevLayer);
-        } 
+        }
     }
 }
 
@@ -237,7 +230,7 @@ void Network::backProp(const vector<double> &targetVals)
     }
 
     // calculates gradients of hidden layer(s)
-    for (unsigned l = m_layers.size() - 2; l > 0 ; --l)
+    for (unsigned l = m_layers.size() - 2; l > 0; --l)
     {
         Layer &hiddenLayer = m_layers[l];
         Layer &nextLayer = m_layers[l + 1];
@@ -256,12 +249,10 @@ void Network::backProp(const vector<double> &targetVals)
         Layer &layer = m_layers[l];
         Layer &prevLayer = m_layers[l - 1];
 
-        for (unsigned n = 0; n < m_layers[l].size() - 1; ++n) {
+        for (unsigned n = 0; n < m_layers[l].size() - 1; ++n)
+        {
             layer[n].updateInputWeights(prevLayer);
         }
-
-        m_layers.back().back().setOutputVal(1.0);
-
     }
 }
 
@@ -269,14 +260,17 @@ void Network::getResults(vector<double> &resultsVals) const
 {
     resultsVals.clear();
 
-    for (unsigned n=0; n < m_layers.back().size() - 1;++n) {
+    for (unsigned n = 0; n < m_layers.back().size() - 1; ++n)
+    {
         resultsVals.push_back(m_layers.back()[n].getOutputVal());
     }
 }
 
-void showVectorVals(string label, vector<double> &v) {
+void showVectorVals(string label, vector<double> &v)
+{
     cout << label << " ";
-    for (unsigned i=0; i <v.size(); ++i) {
+    for (unsigned i = 0; i < v.size(); ++i)
+    {
         cout << v[i] << " ";
     }
 
@@ -284,87 +278,101 @@ void showVectorVals(string label, vector<double> &v) {
 }
 /*------------- TrainingData Class ------------------*/
 
-class TrainingData {
-    public:
-        TrainingData(const string filename);
-        bool isEof(void) {return m_trainingDataFile.eof(); }
-        void getTopology(vector<unsigned> &topology);
-    
-        unsigned getNextInputs(vector<double> &inputsVals);
-        unsigned getTargetOutputs(vector<double> &targetOutputVals);
+class TrainingData
+{
+public:
+    TrainingData(const string filename);
+    bool isEof(void) { return m_trainingDataFile.eof(); }
+    void getTopology(vector<unsigned> &topology);
 
-    private:
-        ifstream m_trainingDataFile;
+    unsigned getNextInputs(vector<double> &inputsVals);
+    unsigned getTargetOutputs(vector<double> &targetOutputVals);
+
+private:
+    ifstream m_trainingDataFile;
 };
 
-void TrainingData::getTopology(vector<unsigned> &topology) {
+void TrainingData::getTopology(vector<unsigned> &topology)
+{
     string line;
     string label;
 
-    getline(m_trainingDataFile,line);
-    stringstream ss(line);
-    if(this->isEof() || label.compare("topology:") != 0){
+    if (!getline(m_trainingDataFile, line))
+    {
+        cout << "Failed to read from file." << endl;
         abort();
     }
 
-    while(!ss.eof()) {
+    stringstream ss(line);
+    ss >> label;
+    if (this->isEof() || label.compare("topology:") != 0)
+    {
+    cout << "Expected 'topology:' but found: " << label << endl;        abort();
+    }
+
+    while (!ss.eof())
+    {
         unsigned n;
         ss >> n;
         topology.push_back(n);
     }
 
     return;
-
 }
 
-TrainingData::TrainingData(const string filename) {
+TrainingData::TrainingData(const string filename)
+{
     m_trainingDataFile.open(filename.c_str());
 }
 
-unsigned TrainingData::getNextInputs(vector<double> &inputVals) {
+unsigned TrainingData::getNextInputs(vector<double> &inputVals)
+{
     inputVals.clear();
 
     string line;
-    getline(m_trainingDataFile,line);
+    getline(m_trainingDataFile, line);
     stringstream ss(line);
 
     string label;
     ss >> label;
-    if(label.compare("in:") == 0) {
+    if (label.compare("in:") == 0)
+    {
         double oneValue;
-        while(ss >> oneValue){
+        while (ss >> oneValue)
+        {
             inputVals.push_back(oneValue);
-
         }
     }
     return inputVals.size();
 }
 
-unsigned TrainingData::getTargetOutputs(vector<double> &targetOutputVals) {
+unsigned TrainingData::getTargetOutputs(vector<double> &targetOutputVals)
+{
     targetOutputVals.clear();
 
     string line;
-    getline(m_trainingDataFile,line);
+    getline(m_trainingDataFile, line);
     stringstream ss(line);
 
     string label;
     ss >> label;
-    if(label.compare("out:")== 0) {
+    if (label.compare("out:") == 0)
+    {
         double oneValue;
-        while(ss >> oneValue) {
+        while (ss >> oneValue)
+        {
             targetOutputVals.push_back(oneValue);
         }
     }
 
     return targetOutputVals.size();
-
 }
 
 int main()
 {
-    //creates Training Data
+    // creates Training Data
 
-    TrainingData trainData("/tmp/trainingData.txt");
+    TrainingData trainData("TrainData.txt");
 
     vector<unsigned> topology;
     trainData.getTopology(topology);
@@ -373,15 +381,18 @@ int main()
     vector<double> inputVals, targetVals, resultVals;
     int trainingPass = 0;
 
-    while (!trainData.isEof()) {
+    while (!trainData.isEof())
+    {
         ++trainingPass;
-        cout << endl << "Pass " << trainingPass;
-    
-        if(trainData.getNextInputs(inputVals) != topology[0]) {
+        cout << endl
+             << "Pass " << trainingPass;
+
+        if (trainData.getNextInputs(inputVals) != topology[0])
+        {
             break;
         }
         showVectorVals(": Inputs:", inputVals);
-        myNetwork.feedFoward(inputVals);
+        myNetwork.feedForward(inputVals);
 
         myNetwork.getResults(resultVals);
         showVectorVals("Outputs:", resultVals);
@@ -393,10 +404,9 @@ int main()
         myNetwork.backProp(targetVals);
 
         cout << "Net recent average error: "
-                << myNetwork.getRecentAverageError() << endl;
-
+             << myNetwork.getRecentAverageError() << endl;
     }
 
-    cout << endl << "SUCCESS!";
-
+    cout << endl
+         << "SUCCESS!";
 }
