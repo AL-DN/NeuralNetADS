@@ -1,7 +1,7 @@
 // Author: Alden Sahi
 // Date: Oct 2024
 // Project Name: NeuralNetADS
-// Project Description: Implementing a Implicityly and Fully Connected Neural Network using CPP
+// Project Description: Implementing an Implicitly and Fully Connected Neural Network using CPP
 
 #include <vector>
 #include <cstdlib>
